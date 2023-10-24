@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'colorfield',
+    'select2',
 ]
 
 MIDDLEWARE = [
@@ -77,6 +78,8 @@ else:
             'PORT': os.getenv('DB_PORT', 5432)
         }
     }
+
+DEFAULT_CHARSET = 'utf-8'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
