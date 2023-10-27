@@ -45,7 +45,7 @@ class Recipe(models.Model):
         max_length=150, verbose_name='Название рецепта', unique=True
     )
     image = models.ImageField(
-        upload_to=None, verbose_name='Изображение для рецепта'
+        upload_to='recipes/images/', verbose_name='Изображение для рецепта'
     )
     text = models.TextField('Описание рецепта')
     author = models.ForeignKey(

@@ -27,7 +27,7 @@ INSTALLED_APPS = [
     'djoser',
     'rest_framework.authtoken',
     'colorfield',
-    'select2',
+    'reportlab',
 ]
 
 MIDDLEWARE = [
@@ -110,8 +110,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-STATIC_URL = 'static/'
-
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'users.User'
@@ -140,4 +138,20 @@ DJOSER = {
         'user': 'users.serializers.UserSerializer',
         'user_list': 'users.serializers.UserSerializer'
     }
+}
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'debug.log'),
+        },
+    },
+    'root': {
+        'handlers': ['file'],
+        'level': 'ERROR',
+    },
 }

@@ -5,12 +5,12 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
-
 from django.http import HttpResponse
 from io import BytesIO
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+from reportlab.lib.styles import getSampleStyleSheet
 
 from .filters import IngredientFilter, RecipeFilter
 from .models import (Recipe, Favorite, ShoppingCart,
@@ -48,31 +48,28 @@ class RecipeViewSet(viewsets.ModelViewSet):
 
     @staticmethod
     def __favorite_shopping(request, pk, model, errors):
-        recipe = get_object_or_404(Recipe, id=pk)
-
         if request.method == 'POST':
-            if model.objects.filter(user=request.user, recipe=recipe).exists():
+            if model.objects.filter(user=request.user, recipe__id=pk).exists():
                 return Response(
-                    {
-                        'errors': errors['recipe_in']
-                    }, status=status.HTTP_400_BAD_REQUEST
+                    {'errors': errors['recipe_in']},
+                    status=status.HTTP_400_BAD_REQUEST
                 )
+            recipe = get_object_or_404(Recipe, id=pk)
             model.objects.create(user=request.user, recipe=recipe)
             serializer = FollowRecipeSerializer(
                 recipe, context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        if model.objects.filter(user=request.user, recipe=recipe).exists():
-            model.objects.filter(user=request.user, recipe=recipe).delete()
+        recipe = model.objects.filter(user=request.user, recipe__id=pk)
+        if recipe.exists():
+            recipe.delete()
             return Response(
-                {'msg': 'Успешно удалено'}, status=status.HTTP_204_NO_CONTENT
+                {'msg': 'Успешно удалено'},
+                status=status.HTTP_204_NO_CONTENT
             )
-
         return Response(
-            {
-                'error': errors['recipe_not_in']
-            }, status=status.HTTP_400_BAD_REQUEST
+            {'error': errors['recipe_not_in']},
+            status=status.HTTP_400_BAD_REQUEST
         )
 
     @action(
@@ -104,7 +101,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     )
     def download_shopping_cart(self, request):
         ingredients_obj = (
-            IngredientRecipe.objects.filter(recipe__carts__user=request.user)
+            IngredientRecipe.objects.filter(recipe__cart__user=request.user)
             .values('ingredient__name', 'ingredient__measurement_unit')
             .annotate(sum_amount=Sum('amount'))
         )
@@ -126,6 +123,10 @@ class RecipeViewSet(viewsets.ModelViewSet):
         buffer = BytesIO()
         pdf = SimpleDocTemplate(buffer, pagesize=A4)
         story = []
+
+        style = getSampleStyleSheet()['Normal']
+        style.wordWrap = 'CJK'
+        style.fontName = 'UTF-8'
 
         for line in ingredients_list:
             style = ParagraphStyle(name='Normal', fontSize=12)
