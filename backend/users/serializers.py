@@ -11,8 +11,8 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_is_subscribed(self, obj):
         if (
-            'request' not in self.context or
-            self.context['request'].user.is_anonymous
+            'request' not in self.context
+            or self.context['request'].user.is_anonymous
         ):
             return False
         return Follow.objects.filter(
