@@ -6,11 +6,6 @@ from rest_framework.filters import SearchFilter
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.http import HttpResponse
-from io import BytesIO
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
 
 from .filters import IngredientFilter, RecipeFilter
 from .models import (Recipe, Favorite, ShoppingCart,
@@ -54,12 +49,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
                     {'errors': errors['recipe_in']},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
             recipe = get_object_or_404(Recipe, id=pk)
             model.objects.create(user=request.user, recipe=recipe)
             serializer = FollowRecipeSerializer(
                 recipe, context={'request': request}
             )
             return Response(serializer.data, status=status.HTTP_201_CREATED)
+
         recipe = model.objects.filter(user=request.user, recipe__id=pk)
         if recipe.exists():
             recipe.delete()
@@ -67,6 +64,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 {'msg': 'Успешно удалено'},
                 status=status.HTTP_204_NO_CONTENT
             )
+
         return Response(
             {'error': errors['recipe_not_in']},
             status=status.HTTP_400_BAD_REQUEST
@@ -120,26 +118,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 f'{ind_str}. {key} - {value[0]} {value[1]}'
             )
 
-        buffer = BytesIO()
-        pdf = SimpleDocTemplate(buffer, pagesize=A4)
-        story = []
+        filename = 'shopping_list.txt'
+        with open(filename, 'w', encoding='utf-8') as file:
+            file.write('\n'.join(ingredients_list))
 
-        style = getSampleStyleSheet()['Normal']
-        style.wordWrap = 'CJK'
-        style.fontName = 'UTF-8'
-
-        for line in ingredients_list:
-            style = ParagraphStyle(name='Normal', fontSize=12)
-            p = Paragraph(line, style)
-            story.append(p)
-            story.append(Spacer(1, 12))
-
-        pdf.build(story)
-
-        buffer.seek(0)
-        response = HttpResponse(buffer.read(), content_type='application/pdf')
-        response[
-            'Content-Disposition'
-        ] = 'attachment; filename=shopping_list.pdf'
+        with open(filename, 'rb') as file:
+            response = HttpResponse(file.read(), content_type='text/plain')
+            response[
+                'Content-Disposition'
+            ] = f'attachment; filename={filename}'
 
         return response

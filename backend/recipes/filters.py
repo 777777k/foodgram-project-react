@@ -1,12 +1,19 @@
 from django_filters import rest_framework as filters
-from .models import Recipe
+from .models import Recipe, Tag
 from rest_framework.filters import SearchFilter
 
 
 class RecipeFilter(filters.FilterSet):
-    tags__slug = filters.CharFilter(
+    tags = filters.ModelMultipleChoiceFilter(
         field_name='tags__slug',
-        lookup_expr='in'
+        to_field_name='slug',
+        queryset=Tag.objects.all(),
+    )
+    is_favorited = filters.BooleanFilter(
+        method='filter_is_favorited'
+    )
+    is_in_shopping_cart = filters.BooleanFilter(
+        method='filter_is_in_shopping_cart'
     )
 
     class Meta:
@@ -15,14 +22,14 @@ class RecipeFilter(filters.FilterSet):
             'author': ['exact'],
         }
 
-    def custom_filter(self, queryset, name, value):
-        if self.request.user.is_authenticated and value:
-            if name == 'is_favorited':
-                return queryset.filter(
-                    favorites__user=self.request.user
-                )
-            elif name == 'is_in_shopping_cart':
-                return queryset.filter(cart__user=self.request.user)
+    def filter_is_favorited(self, queryset, name, value):
+        if value:
+            return queryset.filter(favorites__user=self.request.user)
+        return queryset
+
+    def filter_is_in_shopping_cart(self, queryset, name, value):
+        if value:
+            return queryset.filter(cart__user=self.request.user)
         return queryset
 
 
