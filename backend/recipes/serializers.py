@@ -13,14 +13,12 @@ class IngredientSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'measurement_unit')
         model = Ingredient
-        read_only_fields = ('id', 'name', 'measurement_unit')
 
 
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         fields = ('id', 'name', 'color', 'slug')
         model = Tag
-        read_only_fields = ('id', 'name', 'color', 'slug')
 
 
 class AuthorSerializer(serializers.ModelSerializer):

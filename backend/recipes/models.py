@@ -1,17 +1,24 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, RegexValidator
 from django.db import models
 
 
 User = get_user_model()
 
+MIN_COOKING_TIME = 1
+MAX_FIELD_LENGTH = 150
+MIN_INGREDIENT_AMOUNT = 1
+MAX_HEX_FIELD_LENGTH = 7
+
 
 class Ingredient(models.Model):
     name = models.CharField(
-        verbose_name='Название ингредиента', max_length=150, unique=True
+        verbose_name='Название ингредиента',
+        max_length=MAX_FIELD_LENGTH,
+        unique=True
     )
     measurement_unit = models.CharField(
-        max_length=150, verbose_name='Единицы измерения'
+        max_length=MAX_FIELD_LENGTH, verbose_name='Единицы измерения'
     )
 
     class Meta:
@@ -27,14 +34,24 @@ class Ingredient(models.Model):
 
 
 class Tag(models.Model):
-    name = models.CharField(
-        max_length=150, verbose_name='Название тэга', unique=True
+    color_validator = RegexValidator(
+        regex='^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$',
+        message='Цвет должен быть в формате hex-кода, например, "#RRGGBB"',
     )
-    slug = models.SlugField(max_length=150, unique=True)
-    color = models.CharField(max_length=7, unique=True, default='#49B64E')
+    name = models.CharField(
+        max_length=MAX_FIELD_LENGTH, verbose_name='Название тэга', unique=True
+    )
+    slug = models.SlugField(max_length=MAX_FIELD_LENGTH, unique=True)
+    color = models.CharField(
+        max_length=MAX_HEX_FIELD_LENGTH,
+        unique=True,
+        default='#49B64E',
+        validators=[color_validator],
+    )
 
     class Meta:
         ordering = ['id']
+        unique_together = [('color',)]
 
     def __str__(self):
         return self.name
@@ -42,7 +59,9 @@ class Tag(models.Model):
 
 class Recipe(models.Model):
     name = models.CharField(
-        max_length=150, verbose_name='Название рецепта', unique=True
+        max_length=MAX_FIELD_LENGTH,
+        verbose_name='Название рецепта',
+        unique=True
     )
     image = models.ImageField(
         upload_to='recipes/images/', verbose_name='Изображение для рецепта'
@@ -51,7 +70,6 @@ class Recipe(models.Model):
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        null=True,
         related_name='recipes',
         verbose_name='Автор'
     )
@@ -71,7 +89,8 @@ class Recipe(models.Model):
         verbose_name='Время приготовления',
         validators=(
             MinValueValidator(
-                1, message='Некорректное время приготовления. Минимум 1 минута'
+                MIN_COOKING_TIME,
+                message='Некорректное время приготовления. Минимум 1 минута'
             ),
         ),
     )
@@ -99,7 +118,10 @@ class IngredientRecipe(models.Model):
     amount = models.FloatField(
         verbose_name='Число Ингредиентов',
         validators=(
-            MinValueValidator(1, message='Некорректное значение. Минимум 1'),
+            MinValueValidator(
+                MIN_INGREDIENT_AMOUNT,
+                message='Некорректное значение. Минимум 1'
+            ),
         ),
     )
 

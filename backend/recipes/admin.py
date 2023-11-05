@@ -1,6 +1,12 @@
 from django.contrib import admin
+
 from recipes.models import (
-    Ingredient, Recipe, Tag, IngredientRecipe, ShoppingCart, Favorite
+    Favorite,
+    Ingredient,
+    IngredientRecipe,
+    Recipe,
+    ShoppingCart,
+    Tag,
 )
 
 
@@ -21,6 +27,11 @@ class IngredientAdmin(admin.ModelAdmin):
     empty_value_display = '-пусто-'
 
 
+class IngredientRecipeInline(admin.TabularInline):
+    model = IngredientRecipe
+    extra = 1
+
+
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = (
@@ -30,10 +41,21 @@ class RecipeAdmin(admin.ModelAdmin):
     ordering = ('-pub_date',)
     list_display_links = ('name',)
     search_fields = ('name',)
+    inlines = [IngredientRecipeInline]
 
-    @admin.display(description='Кол-во добавлений в избранное')
+    @admin.display(description='Добавления в избранное')
     def favorite_count(self, recipe):
         return recipe.favorites_recipe.count()
+
+    def save_model(self, request, obj, form, change):
+        if not obj.ingredientrecipe_set.exists():
+            self.message_user(
+                request,
+                "Невозможно сохранить рецепт без ингредиентов.",
+                level="ERROR"
+            )
+        else:
+            obj.save()
 
 
 @admin.register(IngredientRecipe)
