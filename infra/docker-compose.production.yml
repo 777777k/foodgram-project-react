@@ -9,9 +9,7 @@ services:
       - ../.env
 
   backend:
-    build:
-      context: ../backend
-      dockerfile: Dockerfile
+    image: jidiot/infra-backend:latest
     volumes:
       - static:/app/static/
       - media:/app/media/
@@ -21,9 +19,7 @@ services:
       - ../.env
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    image: jidiot/infra-frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
 
@@ -36,7 +32,7 @@ services:
       - ../frontend/build:/usr/share/nginx/html/
       - ../docs/:/usr/share/nginx/html/api/docs/
       - static:/var/html/static/
-      - media:/var/html/media/      
+      - media:/var/html/media/
 
 volumes:
   db:
