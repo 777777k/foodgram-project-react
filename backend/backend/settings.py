@@ -138,6 +138,8 @@ DJOSER = {
     }
 }
 
+CSRF_TRUSTED_ORIGINS = ['https://jdk-foodgram.ddns.net/']
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
