@@ -23,6 +23,11 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         password = data.get('password')
+        if len(password) > 150:
+            raise serializers.ValidationError(
+                'Пароль не может превышать 150 символов.'
+            )
+
         user = User(**data)
         try:
             validate_password(password=password, user=user)
