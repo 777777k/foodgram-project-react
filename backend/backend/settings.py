@@ -138,7 +138,7 @@ DJOSER = {
     }
 }
 
-CSRF_TRUSTED_ORIGINS = ['https://jdk-foodgram.ddns.net/']
+CSRF_TRUSTED_ORIGINS = ['https://jdk-foodgram.ddns.net']
 
 LOGGING = {
     'version': 1,

@@ -57,3 +57,6 @@ class SubscriptionsViewSet(viewsets.ModelViewSet):
             {'detail': 'Вы не были подписаны на данного автора'},
             status=status.HTTP_400_BAD_REQUEST
         )
+
+    def patch(self, request, *args, **kwargs):
+        return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
