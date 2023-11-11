@@ -58,7 +58,6 @@ class SubscriptionsViewSet(viewsets.ModelViewSet):
             status=status.HTTP_400_BAD_REQUEST
         )
 
-
 @SubscriptionsViewSet.as_view(['patch'])
 def disallowed_patch_method(request, *args, **kwargs):
     return Response(status=status.HTTP_405_METHOD_NOT_ALLOWED)
