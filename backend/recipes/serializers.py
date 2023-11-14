@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 from drf_base64.fields import Base64ImageField
+from django.db import transaction
 
 from users.models import Follow
 from .models import (
@@ -98,6 +99,14 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
+    def to_representation(self, instance):
+        try:
+            return super().to_representation(instance)
+        except serializers.ValidationError as exc:
+            if 'author' in exc.detail or 'tags' in exc.detail:
+                return super().to_representation(instance)
+            raise
+
 
 class IngredientCreateSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())
@@ -118,10 +127,24 @@ class RecipeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         request = self.context.get('request')
         serializer = RecipeListSerializer(
-            instance,
-            context={'request': request}
+            instance, context={'request': request}
         )
         return serializer.data
+
+    def validate_ingredients(self, value):
+        unique_ingredients = set()
+
+        for ingredient_data in value:
+            ingredient_id = ingredient_data.get('id').id
+
+            if ingredient_id in unique_ingredients:
+                raise serializers.ValidationError(
+                    'Ингредиенты должны быть уникальными'
+                )
+            else:
+                unique_ingredients.add(ingredient_id)
+
+        return value
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop('ingredients', None)
@@ -132,23 +155,27 @@ class RecipeSerializer(serializers.ModelSerializer):
         if not tags:
             raise serializers.ValidationError('Нужен хотя бы один тег')
 
-        recipe = Recipe.objects.create(**validated_data)
-        recipe.tags.set(tags)
+        with transaction.atomic():
+            self.validate_ingredients(ingredients_data)
 
-        ingredients_list = []
+            recipe = Recipe.objects.create(**validated_data)
+            recipe.tags.set(tags)
 
-        for ingredient_data in ingredients_data:
-            amount = ingredient_data.get('amount')
-            ingredient_id = ingredient_data.get('id').id
-            ingredient = Ingredient.objects.get(id=ingredient_id)
+            ingredients_list = []
 
-            ingredients_list.append(
-                IngredientRecipe(
-                    recipe=recipe, ingredient=ingredient, amount=amount
+            for ingredient_data in ingredients_data:
+                amount = ingredient_data.get('amount')
+                ingredient_id = ingredient_data.get('id').id
+                ingredient = Ingredient.objects.get(id=ingredient_id)
+
+                ingredients_list.append(
+                    IngredientRecipe(
+                        recipe=recipe, ingredient=ingredient, amount=amount
+                    )
                 )
-            )
 
-        IngredientRecipe.objects.bulk_create(ingredients_list)
+            IngredientRecipe.objects.bulk_create(ingredients_list)
+
         return recipe
 
     def update(self, instance, validated_data):
@@ -161,6 +188,8 @@ class RecipeSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Нужен хотя бы один ингредиент')
         if not tags:
             raise serializers.ValidationError('Нужен хотя бы один тег')
+
+        self.validate_ingredients(ingredients_data)
 
         instance.tags.set(tags)
         IngredientRecipe.objects.filter(recipe=instance).delete()

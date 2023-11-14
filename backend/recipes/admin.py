@@ -1,3 +1,4 @@
+from django import forms
 from django.contrib import admin
 
 from recipes.models import (
@@ -10,12 +11,47 @@ from recipes.models import (
 )
 
 
+class RecipeAdminForm(forms.ModelForm):
+    class Meta:
+        model = Recipe
+        fields = '__all__'
+
+    def clean(self):
+        cleaned_data = super().clean()
+        ingredients = cleaned_data.get('ingredients')
+
+        if not ingredients or len(ingredients) == 0:
+            raise forms.ValidationError(
+                'Добавьте хотя бы один ингредиент к рецепту.'
+            )
+
+
+class TagAdminForm(forms.ModelForm):
+    class Meta:
+        model = Tag
+        fields = '__all__'
+
+    def clean_color(self):
+        color = self.cleaned_data.get('color')
+        color_lower = color.lower()
+
+        existing_tag = Tag.objects.filter(
+            color__iexact=color_lower
+        ).exclude(id=self.instance.id).first()
+
+        if existing_tag:
+            raise forms.ValidationError('Тег с таким цветом уже существует.')
+
+        return color
+
+
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('id', 'name', 'slug', 'color')
     list_editable = ('color',)
     list_display_links = ('name',)
     search_fields = ('name',)
+    form = TagAdminForm
 
 
 @admin.register(Ingredient)
@@ -42,20 +78,11 @@ class RecipeAdmin(admin.ModelAdmin):
     list_display_links = ('name',)
     search_fields = ('name',)
     inlines = [IngredientRecipeInline]
+    form = RecipeAdminForm
 
     @admin.display(description='Добавления в избранное')
     def favorite_count(self, recipe):
         return recipe.favorites_recipe.count()
-
-    def save_model(self, request, obj, form, change):
-        if not obj.ingredientrecipe_set.exists():
-            self.message_user(
-                request,
-                "Невозможно сохранить рецепт без ингредиентов.",
-                level="ERROR"
-            )
-        else:
-            obj.save()
 
 
 @admin.register(IngredientRecipe)

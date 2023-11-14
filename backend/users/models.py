@@ -2,6 +2,8 @@ from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
 
+MAX_FIELD_LENGTH = 150
+
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
@@ -34,11 +36,19 @@ class User(AbstractUser):
     username = models.CharField(
         verbose_name='Имя пользователя',
         unique=True,
-        max_length=150,
+        max_length=MAX_FIELD_LENGTH,
         validators=[UnicodeUsernameValidator()]
     )
-    first_name = models.CharField(verbose_name='Имя', max_length=150)
-    last_name = models.CharField(verbose_name='Фамилия', max_length=150)
+    first_name = models.CharField(
+        verbose_name='Имя', max_length=MAX_FIELD_LENGTH
+    )
+    last_name = models.CharField(
+        verbose_name='Фамилия', max_length=MAX_FIELD_LENGTH
+    )
+    password = models.CharField(
+        verbose_name='Пароль',
+        max_length=MAX_FIELD_LENGTH,
+    )
 
     objects = CustomUserManager()
 
