@@ -3,9 +3,14 @@ from rest_framework import permissions, status, generics
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from .models import User, Follow
-from .serializers import FollowListSerializer, FollowCreateSerializer
+from .serializers import (
+    FollowListSerializer,
+    FollowCreateSerializer,
+    UserSerializer
+)
 
 
 class SubscriptionsView(generics.ListAPIView):
@@ -56,4 +61,19 @@ class SubscriptionsViewSet(viewsets.ModelViewSet):
         return Response(
             {'detail': 'Вы не были подписаны на данного автора'},
             status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+class UserPatchView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, id):
+        user = get_object_or_404(User, id=id)
+        serializer = UserSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, id):
+        return Response(
+            {"detail": "PATCH requests are not allowed on this endpoint."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED
         )

@@ -1,11 +1,16 @@
 from django.contrib.auth import get_user_model
-from django.core.validators import MinValueValidator, RegexValidator
+from django.core.validators import (
+    MinValueValidator,
+    RegexValidator,
+    MaxValueValidator
+)
 from django.db import models
 
 
 User = get_user_model()
 
 MIN_COOKING_TIME = 1
+MAX_COOKING_TIME = 1440
 MAX_FIELD_LENGTH = 150
 MIN_INGREDIENT_AMOUNT = 1
 MAX_HEX_FIELD_LENGTH = 7
@@ -92,6 +97,10 @@ class Recipe(models.Model):
                 MIN_COOKING_TIME,
                 message='Некорректное время приготовления. Минимум 1 минута'
             ),
+            MaxValueValidator(
+                MAX_COOKING_TIME,
+                message='Некорректное время приготовления. Максимум 1440 минут'
+            ),
         ),
     )
 
@@ -115,7 +124,7 @@ class IngredientRecipe(models.Model):
         related_name='ingredient_recipe',
         verbose_name='Ингредиент'
     )
-    amount = models.FloatField(
+    amount = models.IntegerField(
         verbose_name='Число Ингредиентов',
         validators=(
             MinValueValidator(

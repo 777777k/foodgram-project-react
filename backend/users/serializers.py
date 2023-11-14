@@ -7,6 +7,8 @@ from rest_framework.validators import UniqueTogetherValidator
 from .models import User, Follow
 from recipes.serializers import FollowRecipeSerializer
 
+MAX_FIELD_LENGTH = 150
+
 
 class UserSerializer(serializers.ModelSerializer):
     is_subscribed = serializers.SerializerMethodField()
@@ -23,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def validate(self, data):
         password = data.get('password')
-        if len(password) > 150:
+        if len(password) > MAX_FIELD_LENGTH:
             raise serializers.ValidationError(
                 'Пароль не может превышать 150 символов.'
             )
@@ -75,13 +77,16 @@ class FollowListSerializer(serializers.ModelSerializer):
         limit = request.GET.get('recipes_limit')
         author = User.objects.get(id=obj.pk)
         recipes = author.recipes.all()
+
         if limit:
             recipes = recipes[:int(limit)]
+
         serializer = FollowRecipeSerializer(
             recipes,
             many=True,
             context={'request': request}
         )
+
         return serializer.data
 
     class Meta:
@@ -128,3 +133,10 @@ class FollowCreateSerializer(serializers.ModelSerializer):
                 message='Вы уже подписаны на данного автора'
             )
         ]
+
+    def to_representation(self, instance):
+        request = self.context.get('request')
+        data = FollowListSerializer(
+            instance.author, context={'request': request}
+        ).data
+        return data
