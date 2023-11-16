@@ -16,14 +16,15 @@ class RecipeAdminForm(forms.ModelForm):
         model = Recipe
         fields = '__all__'
 
-    def clean(self):
-        cleaned_data = super().clean()
-        ingredients = cleaned_data.get('ingredients')
+    def clean_ingredients(self):
+        ingredients = self.cleaned_data.get('ingredients')
 
         if not ingredients or len(ingredients) == 0:
             raise forms.ValidationError(
                 'Добавьте хотя бы один ингредиент к рецепту.'
             )
+
+        return ingredients
 
 
 class TagAdminForm(forms.ModelForm):

@@ -99,14 +99,6 @@ class RecipeListSerializer(serializers.ModelSerializer):
             'cooking_time'
         )
 
-    def to_representation(self, instance):
-        try:
-            return super().to_representation(instance)
-        except serializers.ValidationError as exc:
-            if 'author' in exc.detail or 'tags' in exc.detail:
-                return super().to_representation(instance)
-            raise
-
 
 class IngredientCreateSerializer(serializers.ModelSerializer):
     id = serializers.PrimaryKeyRelatedField(queryset=Ingredient.objects.all())

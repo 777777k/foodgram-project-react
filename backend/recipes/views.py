@@ -32,11 +32,24 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    queryset = Recipe.objects.all().order_by('-pub_date')
     serializer_class = RecipeSerializer
     permission_classes = (IsAuthenticatedOwnerOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
+
+    def get_queryset(self):
+        author_id = self.request.query_params.get('author')
+        tags = self.request.query_params.getlist('tags')
+
+        queryset = Recipe.objects.all()
+
+        if author_id:
+            queryset = queryset.filter(author_id=author_id)
+
+        if tags:
+            queryset = queryset.filter(tags__slug__in=tags)
+
+        return queryset.order_by('-pub_date')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
