@@ -13,6 +13,7 @@ MIN_COOKING_TIME = 1
 MAX_COOKING_TIME = 1440
 MAX_FIELD_LENGTH = 150
 MIN_INGREDIENT_AMOUNT = 1
+MAX_INGREDIENT_AMOUNT = 5000
 MAX_HEX_FIELD_LENGTH = 7
 
 
@@ -130,6 +131,10 @@ class IngredientRecipe(models.Model):
             MinValueValidator(
                 MIN_INGREDIENT_AMOUNT,
                 message='Некорректное значение. Минимум 1'
+            ),
+            MaxValueValidator(
+                MAX_INGREDIENT_AMOUNT,
+                message='Некорректное значение. Максимум 5000'
             ),
         ),
     )

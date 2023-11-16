@@ -1,6 +1,7 @@
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.contrib.auth.validators import UnicodeUsernameValidator
 from django.db import models
+from django.core.exceptions import ValidationError
 
 MAX_FIELD_LENGTH = 150
 
@@ -30,6 +31,14 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractUser):
+
+    def set_password(self, raw_password):
+        if len(raw_password) > MAX_FIELD_LENGTH:
+            raise ValidationError(
+                f"Длина пароля не может превышать {MAX_FIELD_LENGTH} символов."
+            )
+        super().set_password(raw_password)
+
     email = models.EmailField(
         verbose_name='Email-адрес', unique=True
     )

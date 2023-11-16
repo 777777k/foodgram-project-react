@@ -1,15 +1,10 @@
 from django_filters import rest_framework as filters
 from rest_framework.filters import SearchFilter
 
-from .models import Recipe, Tag
+from .models import Recipe
 
 
 class RecipeFilter(filters.FilterSet):
-    tags = filters.ModelMultipleChoiceFilter(
-        field_name='tags__slug',
-        to_field_name='slug',
-        queryset=Tag.objects.all(),
-    )
     is_favorited = filters.BooleanFilter(
         method='filter_is_favorited'
     )
@@ -19,9 +14,7 @@ class RecipeFilter(filters.FilterSet):
 
     class Meta:
         model = Recipe
-        fields = {
-            'author': ['exact'],
-        }
+        fields = {}
 
     def filter_is_favorited(self, queryset, name, value):
         if not self.request.user.is_authenticated:
